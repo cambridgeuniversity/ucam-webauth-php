@@ -1,0 +1,63 @@
+0.51 2008-04-28 JML 
+
+ * Added support for (mandatory) hostname option, which can be set via the 
+   constructor or the hostname get/set method
+ * Fixed potential security issue, which arose due to failure to use a
+   reliable source of hostname when reconstructing the current URL for use in
+   various redirects and checks
+ * Added redirection to the "correct URL" (before authentication) if the
+   configured hostname does not match the hostname in the request's Host: 
+   header, to tackle some consequences of inconsistent/varying choice of
+   hostname in URLs for the site.
+ * Failure to define cookie_key when using Ucam_Webauth sesssions is now
+   reported properly as an error (via status code and message text).
+
+   [Note that the hostname-related security issues affecting V0.5 and
+   earlier also affect versions 0.6 (Nov 2007) & 0.61 (early April
+   2008) which were distributed only as part of Raven authentication
+   support for phpBB3. However, since those versions are significantly
+   different from 0.5, version 0.51 cannot be used as a drop-in
+   replacement for 0.6 or 0.61.]
+
+0.5 2005-03-22 JW
+
+* No code changes - assorted comment and text alterations to make it
+  clear that the module is distributed under the GNU LGPL.
+
+0.4 2005-01-27 JW
+
+* Fixed yet another problem that could result in 'pre-expired' session
+  cookies when run on a plaform with an inaccurate clock even if
+  clock_skew was set correctly
+
+0.3 2005-01-24 JW
+
+* Previous fix didn't seem to resolve the odity with ksort/implode not
+  always working. Added code to assemble cookies by hand to work round
+  this
+
+0.2 2005-01-23 JW
+
+* Dropped bogus SESSION_TICKET_KEY field from session ticket, and 
+  initialised the SESSION_TICKET_ver field. One or the other or both
+  of these seems to cure a problem in which ksort (at least in PHP
+  4.3.10) doesn't and which results in corrupt session cookies.
+
+* Ignore empty/zero $WLS_TOKEN_LIFE field in WLS response. Failing to
+  do so caused all error responses (including 'User Cancelled') to
+  result in an immediate return to the WLS with a message about an
+  expired local session. 
+
+* Fixed typo: $SESSIOM_TICKET_PARAMS -> $SESSION_TICKET_PARAMS
+
+* Added missing property 'fail' and a get/set routine for it 
+
+* Added a 'band-aid' check for the likely case of the certificate file
+  not being found or readable, but all the error handeling here needs
+  re-working.
+
+* Added an error_log entry if the local session has expired
+
+0.1 (28/0404)
+
+. First working version

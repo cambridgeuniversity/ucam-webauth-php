@@ -1,0 +1,403 @@
+University of Cambridge Web Authentication for PHP - version 0.51 (28 Apr 2008)
+==================================================
+
+See "Summary of significant changes" at the end of this file for details of
+changes from earlier versions. 
+
+The main change in V0.51 is that you are now required to specify the hostname
+that should be used in the URLs protected using Ucam_Webauth. This is
+necessary primarily to avoid various potential security issues, though also to
+avoid inconsistent or failed authentication due to varying use of hostnames in
+URLs. See below for details of the hostname option.
+
+Description
+-----------
+
+The University of Cambridge Web Authentication (UcamWebauth) PHP class
+provides an application agent for making authentication requests to
+the UcamWebauth server that can be called from PHP.
+
+WARNING: This is currently alpha-quality software and is in need of
+further development and testing. However it could be a useful starting
+point for anyone wanting to user Raven and PHP.
+
+Prerequisites
+-------------
+
+* PHP
+
+The UcamWebauth class uses OpenSSL's cryptographic functions to verify
+responses from the Raven server, so your version of PHP must be
+compiled with OpenSSL support, e.g.
+
+	./configure --with-openssl
+
+* Public Keys
+
+You must make sure that you obtain a public key that can be used for
+the verification of authentication responses from the UcamWebauth
+server, and that the key is contained within a certificate. The
+UcamWebauth class cannot currently read plain public keys, they must
+be extracted from within a certificate. This module expects a key
+numbered <n> to be stored in a file called '<n>.crt' in the directory
+identified by 'key_dir'.
+
+Usage
+-----
+
+Note that the authenticate function must be called before any output
+(e.g. HTML, HTTP headers) is sent.
+
+	require_once 'ucam_webauth.php';
+
+	$webauth = new Ucam_Webauth(array(
+		        'hostname' => 'www.the.hostname.cam.ac.uk',
+			'key_dir' => '/usr/local/apache/conf/webauth_keys',
+			'cookie_key' => some random string
+			));
+
+	$complete = $webauth->authenticate();
+
+	if (!$complete) exit();
+
+        if ($webauth->success()) { 
+          echo 'SUCCESS. Your are ' . $webauth->principal();
+        } else {
+          echo 'FAIL - ' . $webauth->status() . ':' . $webauth->msg();
+        }
+
+Suppressing Session Management
+------------------------------
+
+The agent will normally maintain a session cookie to cache the user's
+authentication information (since repeated round trips to the
+authentication service will be slow and are discouraged). This can be
+suppressed by setting the object's do_session parameter to FALSE (see
+Parameters below). Doing so might be appropriate for applications that
+maintain their own session data which could conveniently include
+authentication information.
+
+However there are drawbacks to doing so. The agent tries to ensure
+that once authentication is complete, the URL in the browser's
+'Location' bar is the URL the user originally requested. It does this
+by issuing an additional redirect back to the URL originally requested
+and storing details from the authentication response, typically the
+user's original URL with additional information in a CGI parameter
+called 'WLS-Response'. Applications that choose to suppress automatic
+session management should make their own arrangements to 'clean up'
+the URL.
+
+Reference
+---------
+
+* Constructor
+
+  Ucam_Webauth(array parameters)
+
+Parameters are passed to the object in an array, with the key of each
+key => value pair corresponding to a parameter name. The available
+parameters are:
+
+auth-service
+
+  Default: 'https://raven.cam.ac.uk/auth/authenticate.html'
+
+  The full URL for the web login service to be used. 
+
+description
+
+  No default.
+
+  A text description of the resource that is requesting
+  authentication. This may be displayed to the user by the
+  authentication service. It is restricted to printable ASCII
+  characters (0x20 - 0x7e) though it may contain HTML entities
+  representing other characters. The characters '<' and '>' will be
+  converted into HTML entities before being sent to the browser and so
+  this text cannot usefully contain HTML markup.
+
+response_timeout
+
+  Default: 30
+
+  Responses from the central authentication server are
+  time-stamped. This parameter sets the period of time in seconds
+  during which these responses are considered valid. The default is 30
+  seconds.
+
+clock_skew
+
+  Default: 0
+
+  Interpretation of response_timeout is difficult if the colocks on
+  the server running the PHP agent and on the authentication server
+  are out of step. Both servers should use NTP to synchronize their
+  clocks, but if they don't then this parameter should be set to an
+  estimate of the maximum expected difference between them (in
+  seconds).
+
+key_dir
+
+  Default: '/etc/httpd/conf/webauth_keys'
+
+  The name of the directory containing the public key(s) required to
+  validate the authentication responses sent by the server.
+
+do_session
+
+  Default: TRUE
+
+  If TRUE the agent will create and maintain a cookie containing
+  information obtained from the authentication service so that access
+  other than the first will not require redirection to the
+  authentication server. Once the cookie is established and while it
+  remains valid, authentication will complete without redirection each
+  time it is required.
+
+  Automatic use of a session cookie can be suppressed, for example for
+  applications that maintain their own session data which could
+  conveniently include authentication information, but there are
+  drawbacks in doing so. See Suppressing Session Management above.
+
+max_session_life
+
+  Default: 7200 (2 hours)
+
+  The maximum period of time (in seconds) for which an established
+  session will be valid. This may be overriden if the authentication
+  reply contains a shorter 'life' parameter. Note that this does NOT
+  define an expiry time for the session cookie. Session cookies are
+  always set without an expiry time, causing them to expire when the
+  browser session finishes.
+
+timeout_message
+
+  Default: 'your login to the site has expired'
+
+  A re-authentication by the authentication service will be triggered
+  when an established session expires. This option sets a text string
+  which is sent to the authentication server to explain to the user
+  why they are being asked to authenticate again. HTML markup is
+  suppressed as for the description parameter described above.
+
+
+cookie_key (Required)
+
+  No default.
+
+  A random key used to protect session cookies from tampering. Any
+  reasonably unpredictable string (for example the MD5 checksum of a
+  rapidly changing logfile) will be satisfactory. This key must be the
+  same for all uses of the web authentication system that will receive
+  the same session cookies (see the cookie_name, cookie_path and
+  cookie_domain parameters below). If sessions are being managed (see
+  the do_session parameter) then setting this parameter is required.
+
+cookie_name
+
+  Default: 'Ucam-Webauth-Session'
+
+  The name used for the session cookie. When used for access to
+  resources over HTTPS the string '-S' is appended to this name.
+
+cookie_path
+
+  Default: '/'
+
+  The 'Path' attribute for the session cookie. The default is the
+  directory component of the path to the script currently being
+  executed. This should result in the cookie being returned for future
+  requests for this script and for the other resources in the same
+  'directory'; see the important information about the cookie_key
+  parameter above.
+
+cookie_domain
+
+  No default.
+
+  The 'Domain' attribute for the session cookie. By default the
+  'Domain' attribute is omitted when setting the cookie. This should
+  result in the cookie being returned only to the server running the
+  script. Be aware that some people may treat with suspicion cookies
+  with domain attributes that are wider than the host setting the
+  cookie.
+
+fail
+
+  Default FALSE;
+
+  If TRUE, sets the fail parameter in any authentication request sent
+  to the authentication server to 'yes'. This has the effect of
+  requiring the authentication server itself to report any errors that
+  it encounters, rather than returning an error indication.  Note
+  however that even with this parameter set errors may be detected by
+  this module that will result in authentication failing here.
+
+hostname (Required)
+
+  No default.
+
+  The fully-qualified TCP/IP hostname that should be used in request URLs
+  referencing the Ucam_Webauth-enabled application. This *must* be set, as it
+  is needed for multiple reasons - primarily security but also to avoid
+  varying hostnames in URLs leading to failed or inconsistent authentication.
+
+Functions
+
+authenticate()
+
+  This method triggers an authentication exchange. The call returns a
+  authentication complete flag. Because CGI headers may need to be
+  output following a call to authenticate, this call must come before
+  the CGI generates its normal headers, and in particular before the
+  first blank line printed by the CGI program (since this terminates
+  the headers) and before the CGI prints a 'Status' header.
+
+status()
+
+  Returns the three digit status code indicating the result of the
+  authentication attempt. Only valid when the value returned by the
+  authenticate function is equal to TRUE. Values below 600 are for the
+  status field in an authentication_response as defined in the wls2waa
+  protocol. Values in the range 600-699 are used by this
+  module. Possible values are
+
+  600 - General application failure.
+  
+  610 - Browser not returning (probably because it is not accepting)
+  the session cookie. Note that when sessions are being managed
+  following this error authentication will complete without the usual
+  redirect to clear the browser's location bar of the authentication
+  response. See Suppressing Session Management above.
+
+success()
+
+  Returns TRUE if an authentication request was successful. This is a
+  shorthand for checking that status() == 200. Only valid when the
+  value returned by authenticate() is equal to TRUE.
+
+msg()
+
+  Returns a text description corresponding to the status code returned
+  by status().
+
+issue()
+
+  The time/date that the authentication assertion on which the user's
+  authentication is based was issued by the authentication
+  service. This date/time is in the format specified by RFC 3339,
+  except that time-offset is always 'Z', there are no fractional
+  seconds, and punctuation is omitted, e.g. 19821021T1129Z.
+
+expire()
+
+  The time/date that this authentication will expire. This will be
+  calculated from issue() and the lower of max_session_life or the
+  remaining session lifetime returned from the authentication
+  service. This date/time is in the same format as issue() above.
+
+id()
+
+  The identifier of the authentication assertion on which the user's
+  authentication is based.
+
+principal()
+
+  Indicates the authenticated identity of the browser user. Only valid
+  if status() == 200.
+
+auth()
+
+  Indicates which authentication type was used if authentication was
+  established by interaction with the user. This value consists of a
+  single text token. The only value currently in use is 'pwd'.
+
+sso()
+
+  Indicates which authentication types were previously used if
+  authentication was established based on previous successful
+  authentication interactions with the user. This value consists of a
+  sequence of text tokens separated by commas. The only value
+  currently in use is 'pwd'.
+
+params()
+
+  Returns the value of the parameters attribute of the corresponding
+  authenticate call.
+
+Get/Set Functions
+
+  The following functions set (if called with an argument) and return
+  the values of the identically named attributes of the authentication
+  object.
+
+	auth_service
+	description
+	response_timeout
+	clock_skew
+	key_dir
+	do_session
+	max_session_life
+	timeout_message
+	cookie_key
+	cookie_name
+	cookie_path
+	cookie_domain
+	fail
+	hostname
+
+Summary of significant changes to the Ucam_Webauth class
+-------------------------------------------------------
+
+[Note that the hostname-related security issues affecting V0.5 and earlier
+also affect versions 0.6 (Nov 2007) & 0.61 (early April 2008) which were
+distributed only as part of Raven authentication support for phpBB3. However,
+since those versions are significantly different from 0.5, version 0.51 cannot
+be used as a drop-in replacement for 0.6 or 0.61.]
+
+Version 0.51 (28 Apr 2008): 
+ * Added support for (mandatory) hostname option, which can be set via the 
+   constructor or the hostname get/set method
+ * Fixed potential security issue, which arose due to failure to use a
+   reliable source of hostname when reconstructing the current URL for use in
+   various redirects and checks
+ * Added redirection to the "correct URL" (before authentication) if the
+   configured hostname does not match the hostname in the request's Host: 
+   header, to tackle some consequences of inconsistent/varying choice of
+   hostname in URLs for the site.
+ * Failure to define cookie_key when using Ucam_Webauth sesssions is now
+   reported properly as an error (via status code and message text).
+
+Version 0.5 (22 Mar 2005):
+ * Clarify that distribution is under the terms of the GNU Lesser General Public
+   License (LGPL).
+
+Version 0.4 (27 Jan 2005, may be the first public release):
+ * Fix for problems arising if local system clock was incorrect.
+
+Version 0.3 (24 Jan 2005):
+ * Workaround for problem with constructing session cookies (which didn't
+   always work reliably)
+
+Version 0.2 (21 Jan 2005):
+ * Fixed several bugs serious bugs affecting usability.
+
+Version 0.1 (28 Apr 2004):
+ * initial version
+
+Information for versions prior to 0.4 is vague - dates are when the changes
+were made, not when they were released (if they were released).
+
+Copyright
+---------
+
+Copyright (c) 2004,2005,2007,2008 University of Cambridge. You can redistribute
+it and/or modify it under the terms of the GNU Lesser General Public
+License.
+
+Copyright
+---------
+
+Copyright (c) 2004,2005,2008 University of Cambridge. You can redistribute
+it and/or modify it under the terms of the GNU Lesser General Public
+License.
