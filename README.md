@@ -26,14 +26,13 @@ Patches to this module are welcome which will be included as and when
 time permits. UIS staff also occasionally correct serious bugs.
 
 Note that versions of this library prior to 0.52 contained security
-vulnerabilities - see the CHANGES file fior details. Note that version
+vulnerabilities - see the CHANGES file for details. Note that version
 0.51 and later contain an incompatible change against earlier
 versions: a securely-obtained host name must be supplied before
-invoking the library functions.
-
-These problem also affected versions of this library identified as
-0.6, 0.61, and 0.62 that were distributed only as part of Raven
-authentication support for phpBB3 in early 2008.
+invoking the library functions. These problem also affected versions
+of this library identified as 0.6, 0.61, and 0.62 that were
+distributed only as part of Raven authentication support for phpBB3 in
+early 2008.
 
 This module is distributed under the terms of the GNU Lesser General
 Public License and is currently minimally maintained by UIS Raven
