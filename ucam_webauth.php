@@ -25,7 +25,7 @@
 //
 // $Id: ucam_webauth.php,v 1.3 2013/04/11 21:48:55 jes91 Exp $
 //
-// Version 0.51
+// Version 0.52
 
 class Ucam_Webauth {
 
@@ -296,21 +296,15 @@ class Ucam_Webauth {
     return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == "on");
   }
 
-  function load_key($key_id) {
-    $key_filename = $this->key_dir . '/' . $key_id . '.crt';
-    if (file_exists($key_filename)) {
-      $key_file = fopen($key_filename, 'r');
-      $key = fread($key_file, filesize($key_filename));
-      fclose($key_file);
-      return $key;
-    }
-    return NULL;
-  }
-
   function check_sig($data, $sig, $key_id) {
 
     // **** TODO : remove trailing slash from key_dir
 
+    // Ensure keyid only contains digits (protect against path traversal)
+    if (preg_match('/^[1-9][0-9]{0,7}$/', $key_id) !== 1) {
+      error_log('Invalid key identifier in response message',0);
+      return false;
+    }
     $key_filename = $this->key_dir . '/' . $key_id . '.crt';
     $key_file = fopen($key_filename, 'r');
     // Band-aid test for the most obvious cause of error - whole
@@ -536,15 +530,7 @@ class Ucam_Webauth {
     
       $this->session_ticket[$this->SESSION_TICKET_STATUS] = '200';
       $this->session_ticket[$this->SESSION_TICKET_MSG] = '';
-      /*
-      $key = $this->load_key($token[$this->WLS_TOKEN_KEYID]);
 
-      if ($key == NULL) {
-	$this->session_ticket[$this->SESSION_TICKET_MSG] = 'Failed to load '.$this->key_dir . '/' . $token[$this->WLS_TOKEN_KEYID] . '.crt';
-	$this->session_ticket[$this->SESSION_TICKET_STATUS] = '600';
-	return $this->COMPLETE;
-      }
-      */
       //echo '<p>' . implode('!', $token) . '</p>';
       $sig = array_pop($token);
       $key_id = array_pop($token);

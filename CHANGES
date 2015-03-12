@@ -1,3 +1,46 @@
+[Note - version numbers 0.6, 0.61, and 0.62 are reserved to refer to
+incompatible versions of this module that were distributed only as
+part of Raven authentication support for phpBB3 in early 2008]
+
+0.52 2015-03-10 JW
+
+Fix a path traversal vulnerability in handling keyid.
+
+The Ucam WebAuth response parameter 'keyid' identifies the RSA key
+used to sign the request. In this implementation keyid is used to form
+a file name from which the key is read. The implementation failed to
+sanitise the value of keyid, allowing an attacker to use path traversal
+to select a different key to use for verification. An attacker who
+could arrange for that key to be one for which he had the corresponding
+private key could effectively forge authentication messages.
+
+This edit checks that keyid matches the (recently-clarified)
+definition of being entirely numeric, of being no longer than 8
+characters, and of not starting with a zero.
+
+<unreleased> 2014-03-27 MCV
+
+Authenticate can now force re-authentication
+    
+This is actually a batch of changes by John Sutton [DAMTP], which he
+describes as "enhancements and bug-fixes". The largest change he
+describes thus:
+    
+    "The main function authenticate($authassertionid = NULL, $testauthonly
+     = NULL) now takes the two arguments:
+    
+    $authassertionid - is used to force re-authentication.  If specified,
+    it can be read as “authenticate(‘but this ticket will not do’)”.  I
+    use it to implement an idle timeout as follows: on every successful
+    authentication, retrieve the current ticket id using the id() function
+    and store it somewhere.  When you want to force re-authentication,
+    pass this ticket id back in as the first argument to authenticate().
+    
+    $testauthonly - a boolean which if set true means to only test the
+    authentication state, i.e., return true or false accordingly but do
+    NOT send any headers.  This is useful when you are working with ajax
+    requests."
+
 0.51 2008-04-28 JML 
 
  * Added support for (mandatory) hostname option, which can be set via the 
