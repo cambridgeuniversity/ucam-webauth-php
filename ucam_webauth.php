@@ -25,7 +25,7 @@
 //
 // $Id: ucam_webauth.php,v 1.3 2013/04/11 21:48:55 jes91 Exp $
 //
-// Version 0.52
+// Version 0.53
 
 class Ucam_Webauth {
 
