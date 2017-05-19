@@ -1,6 +1,8 @@
 PHP library for the Ucam WebAuth (Raven) protocol
 =================================================
 
+[![Build Status](https://travis-ci.org/cambridgeuniversity/ucam-webauth-php.svg?branch=master)](https://travis-ci.org/cambridgeuniversity/ucam-webauth-php)
+
 The UcamWebauth PHP class provides an application agent for making
 authentication requests to a UcamWebauth server (such as Raven) that 
 can be called from PHP.
