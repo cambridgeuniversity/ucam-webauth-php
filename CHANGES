@@ -2,6 +2,13 @@
 incompatible versions of this module that were distributed only as
 part of Raven authentication support for phpBB3 in early 2008]
 
+0.53 2017-05-19 JW
+
+Remove 7th parameter to gmmktime
+
+This parameter does nothing, has been deprecated for some
+while and was removed in PHP 7.
+
 0.52 2015-03-10 JW
 
 Fix a path traversal vulnerability in handling keyid.
