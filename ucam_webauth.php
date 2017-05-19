@@ -384,8 +384,7 @@ class Ucam_Webauth {
 		    substr($t, 13, 2),
 		    substr($t, 4, 2),
 		    substr($t, 6, 2),
-		    substr($t, 0, 4),
-		    -1);
+		    substr($t, 0, 4));
   }
 
   function wls_encode($str) {
