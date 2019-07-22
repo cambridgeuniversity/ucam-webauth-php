@@ -1,3 +1,5 @@
+> This repository has moved to https://gitlab.developers.cam.ac.uk/uis/devops/external/ucam-webauth-php
+
 PHP library for the Ucam WebAuth (Raven) protocol
 =================================================
 
